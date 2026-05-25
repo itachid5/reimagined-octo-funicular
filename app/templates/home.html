@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ settings.get('site_name', 'Blog Website') }}</title>
+
+    <script>
+        (() => {
+            const saved = localStorage.getItem('theme') || localStorage.getItem('admin-theme');
+            const prefer = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.dataset.theme = saved || (prefer ? 'dark' : 'light');
+        })();
+    </script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Material+Symbols+Outlined:wght,FILL@200,0..1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css?v=5">
+
+    <style>
+        /* Homepage-specific layout */
+        .home-main { width: 100%; max-width: 1100px; margin: 0 auto; padding: clamp(1.5rem,4vw,2.5rem) 20px; min-height: 65vh; }
+
+        /* Featured hero */
+        .home-featured { margin-bottom: 2rem; }
+        .home-featured-img {
+            display: block; width: 100%; aspect-ratio: 16/8; object-fit: cover;
+            background: var(--surface-low); border-radius: var(--radius); margin-bottom: 1rem;
+        }
+        .home-featured-label {
+            font-size: 10px; text-transform: uppercase; letter-spacing: .12em;
+            font-weight: 600; color: var(--muted); display: inline-block;
+            background: var(--surface-high); padding: 3px 8px; border-radius: 4px; margin-bottom: .6rem;
+        }
+        .home-featured h1 {
+            font-family: 'DM Sans', sans-serif; font-size: clamp(1.6rem,4vw,2.4rem);
+            font-weight: 600; letter-spacing: -0.03em; line-height: 1.15;
+            color: var(--text); margin-bottom: .4rem;
+        }
+        .home-featured h1 a { color: inherit; }
+        .home-featured-summary { color: var(--muted); font-size: 14px; margin-bottom: .8rem; max-width: 700px; }
+        .home-featured-meta {
+            font-size: 10px; text-transform: uppercase; letter-spacing: .08em;
+            font-weight: 500; color: var(--faint); margin-bottom: .8rem;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+        }
+        .home-featured-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--faint); }
+        .home-featured-link {
+            font-size: 10px; text-transform: uppercase; letter-spacing: .12em;
+            font-weight: 700; color: var(--text); border-bottom: 1px solid var(--text);
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+
+        /* Two-column content grid */
+        .home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; border-top: 1px solid var(--line); padding-top: 2rem; }
+        .home-section-title {
+            font-size: 10px; text-transform: uppercase; letter-spacing: .1em;
+            font-weight: 600; color: var(--muted); margin-bottom: 1.2rem;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .home-section-title .lucide { width: 14px; height: 14px; }
+
+        /* Trending card */
+        .home-trend-card {
+            display: flex; flex-direction: column; gap: .6rem; padding-bottom: 1.2rem;
+            margin-bottom: 1.2rem; border-bottom: 1px solid var(--line); cursor: pointer;
+        }
+        .home-trend-card:last-child { border-bottom: none; margin-bottom: 0; }
+        .home-trend-img {
+            width: 100%; aspect-ratio: 3/2; object-fit: cover;
+            background: var(--surface-low); border-radius: var(--radius);
+            transition: transform .4s ease;
+        }
+        .home-trend-card:hover .home-trend-img { transform: scale(1.02); }
+        .home-trend-cat {
+            font-size: 10px; text-transform: uppercase; letter-spacing: .1em;
+            font-weight: 600; color: var(--faint);
+        }
+        .home-trend-title {
+            font-family: 'DM Sans', sans-serif; font-size: clamp(1rem,1.6vw,1.15rem);
+            font-weight: 600; letter-spacing: -0.02em; line-height: 1.25; color: var(--text);
+        }
+        .home-trend-title a { color: inherit; }
+        .home-trend-card:hover .home-trend-title { color: var(--text-secondary); }
+        .home-trend-excerpt { color: var(--muted); font-size: 13px; line-height: 1.5; }
+        .home-trend-meta {
+            font-size: 10px; text-transform: uppercase; letter-spacing: .06em;
+            font-weight: 500; color: var(--faint);
+            display: flex; flex-wrap: wrap; align-items: center; gap: 5px;
+        }
+        .home-trend-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--faint); }
+
+        /* Section footer link */
+        .home-section-footer {
+            margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid var(--line);
+        }
+        .home-section-footer a {
+            font-size: 10px; text-transform: uppercase; letter-spacing: .12em;
+            font-weight: 700; color: var(--text);
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .home-section-footer a:hover { color: var(--text-secondary); }
+
+        /* Bottom taxonomy section */
+        .home-taxonomy { border-top: 1px solid var(--line); padding-top: 2rem; margin-top: 2.5rem; }
+        .home-taxonomy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; }
+        .home-taxonomy-header {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;
+        }
+        .home-taxonomy-header h2 {
+            font-size: 10px; text-transform: uppercase; letter-spacing: .1em;
+            font-weight: 600; color: var(--muted);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .home-taxonomy-header a {
+            font-size: 10px; text-transform: uppercase; letter-spacing: .1em;
+            font-weight: 600; color: var(--text);
+        }
+        .home-cat-link {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: .6rem 0; border-bottom: 1px solid var(--line);
+            font-size: 14px; color: var(--text);
+        }
+        .home-cat-link:hover { color: var(--text-secondary); }
+        .home-cat-link span:last-child {
+            font-size: 10px; text-transform: uppercase; letter-spacing: .1em;
+            font-weight: 600; color: var(--faint);
+        }
+        .home-tag-chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+        .home-tag-chip {
+            border: 1px solid var(--surface-high); border-radius: 999px;
+            padding: .35rem .65rem; font-size: 10px; text-transform: uppercase;
+            letter-spacing: .08em; font-weight: 600; color: var(--text);
+        }
+        .home-tag-chip:hover { background: var(--surface-high); }
+
+        /* Drawer (mobile sidebar for home.html) */
+        .home-drawer-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+            backdrop-filter: blur(3px); z-index: 999;
+            opacity: 0; pointer-events: none; transition: opacity .35s ease;
+        }
+        .home-drawer-overlay.show { opacity: 1; pointer-events: auto; }
+        html[data-theme="light"] .home-drawer-overlay { background: rgba(255,255,255,0.25); }
+
+        .home-drawer {
+            position: fixed; top: 0; left: 0; bottom: 0;
+            width: 250px; z-index: 1000;
+            background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-right: 1px solid var(--glass-border);
+            transform: translateX(-100%);
+            transition: transform .4s cubic-bezier(0.25,0.8,0.25,1);
+            display: flex; flex-direction: column; overflow-x: hidden; overflow-y: auto; padding: 15px 0 18px;
+            scrollbar-width: thin;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+        .home-drawer.open { transform: translateX(0); }
+
+        @media (max-width: 768px) {
+            .home-grid, .home-taxonomy-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 640px) {
+            .home-main { padding: 1.2rem 16px; }
+            .home-featured-img { aspect-ratio: 4/3; }
+            .home-drawer { width: min(250px, 85vw); }
+        }
+    </style>
+</head>
+
+<body>
+    {% set site_name = settings.get('site_name', 'Blog Website') %}
+    {% set site_description = settings.get('site_description', 'A modern professional blog built with FastAPI.') %}
+    {% set current_path = '/' %}
+
+    <!-- TOPBAR -->
+    <div class="topbar glass-panel">
+        <div class="topbar-left">
+            <button class="icon-btn" id="openMenuBtn" aria-label="Open menu">
+                <i data-lucide="menu"></i>
+            </button>
+            <span class="topbar-brand"><a href="/">{{ site_name }}</a></span>
+        </div>
+        <nav class="topbar-nav" aria-label="Primary navigation">
+            <a href="/posts">All Posts</a>
+            <a href="/categories">Categories</a>
+            <a href="/tags">Tags</a>
+            <a href="/about">About</a>
+        </nav>
+        <div class="topbar-right header-controls">
+            <button class="icon-btn" id="open-search-btn" type="button" aria-label="Search" data-open-search>
+                <i data-lucide="search"></i>
+            </button>
+            <button class="icon-btn" id="themeToggleBtn" aria-label="Toggle theme" data-theme-toggle>
+                <i data-lucide="sun" class="sun-icon"></i>
+                <i data-lucide="moon" class="moon-icon"></i>
+            </button>
+            <button class="icon-btn" id="mobile-menu-btn" type="button" aria-label="Menu" data-open-menu style="display:none;">
+                <i data-lucide="menu"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- SEARCH OVERLAY -->
+    <div id="search-overlay" class="search-overlay" aria-hidden="true">
+        <div class="search-overlay-head">
+            <span>Search {{ site_name }}</span>
+            <button class="icon-button soft" id="close-search-btn" type="button" aria-label="Close search" data-close-search>
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="search-panel">
+            <form id="search-form" action="/search" method="get">
+                <input id="search-input" name="q" type="text" placeholder="Type to search..." autocomplete="off">
+            </form>
+            <div class="search-topics" id="search-tags">
+                <span>Popular Topics</span>
+                <div>
+                    {% for category in selected_home_categories[:4] %}
+                    <a href="/category/{{ category.slug }}">{{ category.name }}</a>
+                    {% endfor %}
+                    {% for tag in selected_home_tags[:6] %}
+                    <a href="/tag/{{ tag.slug }}">#{{ tag.name }}</a>
+                    {% endfor %}
+                    {% if not selected_home_categories and not selected_home_tags %}
+                    <a href="/categories">Categories</a>
+                    <a href="/tags">Tags</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DRAWER OVERLAY + SIDEBAR -->
+    <div class="home-drawer-overlay" id="mobile-overlay"></div>
+
+    <aside class="home-drawer" id="drawer" aria-hidden="true">
+        <div class="sidebar-header">
+            <div class="sidebar-logo"><a href="/">{{ site_name }}</a></div>
+            <button class="icon-btn" id="close-menu-btn" aria-label="Close menu">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <div class="section-title">Navigation</div>
+        <a href="/" class="menu-item active"><i data-lucide="home"></i><span>Home</span></a>
+        <a href="/posts" class="menu-item"><i data-lucide="file-text"></i><span>All Posts</span></a>
+        <a href="/search" class="menu-item"><i data-lucide="search"></i><span>Search</span></a>
+
+        <button type="button" class="menu-item collapsible-btn" onclick="toggleSubmenu('home-cat-submenu', this)" aria-expanded="false" aria-controls="home-cat-submenu">
+            <span class="menu-row"><i data-lucide="folder"></i><span class="menu-label">Categories</span></span>
+            <i data-lucide="chevron-down" class="chevron"></i>
+        </button>
+        <div id="home-cat-submenu" class="submenu">
+            <div class="submenu-inner">
+                {% if menu_categories %}
+                  {% for mc in menu_categories[:4] %}
+                  <a href="/category/{{ mc.slug }}" class="menu-item sub-item"><i data-lucide="folder"></i><span class="menu-label">{{ mc.name }}</span></a>
+                  {% endfor %}
+                {% else %}
+                  <div class="menu-item sub-item" style="pointer-events: none; opacity: 0.6;">
+                    <i data-lucide="info"></i><span class="menu-label">No categories found</span>
+                  </div>
+                {% endif %}
+                <a href="/categories" class="menu-item sub-item"><i data-lucide="grid"></i><span class="menu-label">All Categories</span></a>
+            </div>
+        </div>
+        <button type="button" class="menu-item collapsible-btn" onclick="toggleSubmenu('home-tag-submenu', this)" aria-expanded="false" aria-controls="home-tag-submenu">
+            <span class="menu-row"><i data-lucide="tag"></i><span class="menu-label">Tags</span></span>
+            <i data-lucide="chevron-down" class="chevron"></i>
+        </button>
+        <div id="home-tag-submenu" class="submenu">
+            <div class="submenu-inner">
+                {% if menu_tags %}
+                  {% for mt in menu_tags[:4] %}
+                  <a href="/tag/{{ mt.slug }}" class="menu-item sub-item"><i data-lucide="hash"></i><span class="menu-label">{{ mt.name }}</span></a>
+                  {% endfor %}
+                {% else %}
+                  <div class="menu-item sub-item" style="pointer-events: none; opacity: 0.6;">
+                    <i data-lucide="info"></i><span class="menu-label">No tags found</span>
+                  </div>
+                {% endif %}
+                <a href="/tags" class="menu-item sub-item"><i data-lucide="tags"></i><span class="menu-label">All Tags</span></a>
+            </div>
+        </div>
+        <div class="section-title">Discover</div>
+        <a href="/popular" class="menu-item"><i data-lucide="flame"></i><span>Popular Posts</span></a>
+        <a href="/recent" class="menu-item"><i data-lucide="clock"></i><span>Recent Posts</span></a>
+        <a href="/archive" class="menu-item"><i data-lucide="archive"></i><span>Archive</span></a>
+
+        <div class="section-title">Pages</div>
+        <a href="/about" class="menu-item"><i data-lucide="info"></i><span>About</span></a>
+        <a href="/contact" class="menu-item"><i data-lucide="mail"></i><span>Contact</span></a>
+        <a href="/privacy" class="menu-item"><i data-lucide="shield"></i><span>Privacy Policy</span></a>
+        <a href="/terms" class="menu-item" style="margin-bottom: 20px;"><i data-lucide="file-check"></i><span>Terms & Conditions</span></a>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="home-main">
+
+        <!-- FEATURED POST -->
+        {% if featured_post %}
+        <article class="home-featured">
+            <a href="/post/{{ featured_post.slug }}">
+                <img class="home-featured-img" src="{{ featured_post.featured_image_url }}" alt="{{ featured_post.title }}" loading="eager">
+            </a>
+            <div>
+                <a href="{% if featured_post.category %}/category/{{ featured_post.category.slug }}{% else %}/categories{% endif %}" class="home-featured-label">
+                    {{ featured_post.category.name if featured_post.category else 'Uncategorized' }}
+                </a>
+                <h1><a href="/post/{{ featured_post.slug }}">{{ featured_post.title }}</a></h1>
+                <p class="home-featured-summary">{{ featured_post.summary }}</p>
+                <div class="home-featured-meta">
+                    <span>Published {{ published_time_label(featured_post.published_at) }}</span>
+                    <span class="dot"></span>
+                    <span>{{ estimate_read_time(featured_post.content) }} min read</span>
+                    <span class="dot"></span>
+                    <span>{{ format_views_count(featured_post.views_count) }}</span>
+                </div>
+                <a class="home-featured-link" href="/post/{{ featured_post.slug }}">
+                    Read Essay <i data-lucide="arrow-right" style="width:12px;height:12px;"></i>
+                </a>
+            </div>
+        </article>
+        {% endif %}
+
+        <!-- TRENDING + LATEST -->
+        <div class="home-grid">
+            <!-- Trending -->
+            <section>
+                <div class="home-section-title">
+                    <i data-lucide="trending-up"></i> Trending
+                </div>
+                {% for post in trending_posts %}
+                <article class="trend home-trend-card">
+                    <a href="/post/{{ post.slug }}">
+                        <img class="home-trend-img" src="{{ post.featured_image_url }}" alt="{{ post.title }}" loading="lazy">
+                    </a>
+                    <div>
+                        <div class="home-trend-cat">
+                            <a href="{% if post.category %}/category/{{ post.category.slug }}{% else %}/categories{% endif %}">{{ post.category.name if post.category else 'Uncategorized' }}</a>
+                        </div>
+                        <h3 class="home-trend-title"><a href="/post/{{ post.slug }}">{{ post.title }}</a></h3>
+                        <p class="home-trend-excerpt line-clamp-3">{{ post.summary }}</p>
+                        <div class="home-trend-meta">
+                            <span>Published {{ published_time_label(post.published_at) }}</span>
+                            <span class="dot"></span>
+                            <span>{{ estimate_read_time(post.content) }} min read</span>
+                            <span class="dot"></span>
+                            <span>{{ format_views_count(post.views_count) }}</span>
+                        </div>
+                    </div>
+                </article>
+                {% else %}
+                <p class="empty-state">No trending posts yet.</p>
+                {% endfor %}
+
+                <div class="home-section-footer">
+                    <a href="/posts">View All Trending <i data-lucide="arrow-right" style="width:12px;height:12px;"></i></a>
+                </div>
+            </section>
+
+            <!-- Latest -->
+            <section>
+                <div class="home-section-title">
+                    <i data-lucide="book-open"></i>
+                    <h2>Latest Posts</h2>
+                </div>
+                <div class="home-latest-grid">
+                {% for post in latest_posts %}
+                <article class="post-card home-trend-card">
+                    <a href="/post/{{ post.slug }}">
+                        <img class="home-trend-img" src="{{ post.featured_image_url }}" alt="{{ post.title }}" loading="lazy">
+                    </a>
+                    <div>
+                        <p class="meta">{{ post.category.name if post.category else 'Uncategorized' }}</p>
+                        <p class="post-card-meta">{{ format_views_count(post.views_count) }} · {{ estimate_read_time(post.content) }} min read{% if post.published_at %} · Published {{ published_time_label(post.published_at) }}{% endif %}</p>
+                        <h3 class="home-trend-title"><a href="/post/{{ post.slug }}">{{ post.title }}</a></h3>
+                        <p class="home-trend-excerpt line-clamp-3">{{ post.summary }}</p>
+                    </div>
+                </article>
+                {% else %}
+                <p class="empty-state">No latest posts yet.</p>
+                {% endfor %}
+                </div>
+
+                <div class="home-section-footer">
+                    <a href="/posts">View All Posts <i data-lucide="arrow-right" style="width:12px;height:12px;"></i></a>
+                </div>
+            </section>
+        </div>
+
+        <!-- CATEGORIES + TAGS -->
+        <div class="home-taxonomy">
+            <div class="home-taxonomy-grid">
+                <div>
+                    <div class="home-taxonomy-header">
+                        <h2><i data-lucide="folder-open" style="width:14px;height:14px;"></i> Categories</h2>
+                        <a href="/categories">All Categories</a>
+                    </div>
+                    {% for category in selected_home_categories %}
+                    <a href="/category/{{ category.slug }}" class="home-cat-link">
+                        <span>{{ category.name }}</span>
+                        <span>Open</span>
+                    </a>
+                    {% else %}
+                    <p style="font-size:13px;color:var(--muted);">No homepage categories selected yet.</p>
+                    {% endfor %}
+                </div>
+                <div>
+                    <div class="home-taxonomy-header">
+                        <h2><i data-lucide="hash" style="width:14px;height:14px;"></i> Tags</h2>
+                        <a href="/tags">All Tags</a>
+                    </div>
+                    <div class="home-tag-chips">
+                        {% for tag in selected_home_tags %}
+                        <a href="/tag/{{ tag.slug }}" class="home-tag-chip">#{{ tag.name }}</a>
+                        {% else %}
+                        <p style="font-size:13px;color:var(--muted);">No homepage tags selected yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div>
+                <a class="footer-brand" href="/">{{ site_name }}</a>
+                <p>{{ site_description }}</p>
+            </div>
+            <nav aria-label="Footer links">
+                <a href="/privacy">Privacy</a>
+                <a href="/terms">Terms</a>
+                <a href="/contact">Contact</a>
+                <a href="/posts">All Posts</a>
+                <a href="/categories">Categories</a>
+                <a href="/tags">Tags</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Sidebar
+        const drawer = document.getElementById('drawer');
+        const overlay = document.getElementById('mobile-overlay');
+        const openBtn = document.getElementById('openMenuBtn');
+        const closeBtn = document.getElementById('close-menu-btn');
+
+        function openMenu() {
+            drawer.classList.add('open');
+            drawer.setAttribute('aria-hidden', 'false');
+            overlay.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMenu() {
+            drawer.classList.remove('open');
+            drawer.setAttribute('aria-hidden', 'true');
+            overlay.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+        openBtn.addEventListener('click', openMenu);
+        closeBtn.addEventListener('click', closeMenu);
+        overlay.addEventListener('click', closeMenu);
+
+        window.toggleSubmenu = function(id, btn) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const isOpen = el.classList.contains('open');
+            document.querySelectorAll('.submenu.open').forEach(submenu => {
+                if (submenu.id !== id) submenu.classList.remove('open');
+            });
+            document.querySelectorAll('.collapsible-btn[aria-expanded="true"]').forEach(button => {
+                if (button !== btn) button.setAttribute('aria-expanded', 'false');
+            });
+            el.classList.toggle('open', !isOpen);
+            btn.setAttribute('aria-expanded', String(!isOpen));
+        };
+
+        // Search
+        const searchOverlay = document.getElementById('search-overlay');
+        const searchInput = document.getElementById('search-input');
+        const searchForm = document.getElementById('search-form');
+        const searchTags = document.getElementById('search-tags');
+        const searchOpenBtn = document.getElementById('open-search-btn');
+        const searchCloseBtn = document.getElementById('close-search-btn');
+
+        function openSearch() {
+            searchOverlay.classList.add('open');
+            searchOverlay.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => {
+                searchInput?.focus();
+                searchTags?.classList.add('ready');
+            }, 90);
+        }
+        function closeSearch() {
+            searchOverlay.classList.remove('open');
+            searchOverlay.setAttribute('aria-hidden', 'true');
+            searchTags?.classList.remove('ready');
+            if (searchInput) searchInput.value = '';
+            document.body.style.overflow = '';
+        }
+        searchOpenBtn.addEventListener('click', openSearch);
+        searchCloseBtn.addEventListener('click', closeSearch);
+
+        searchForm?.addEventListener('submit', e => {
+            if (!searchInput?.value.trim()) { e.preventDefault(); searchInput?.focus(); }
+        });
+        searchInput?.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const q = searchInput.value.trim();
+                if (q) window.location.href = `/search?q=${encodeURIComponent(q)}`;
+            }
+        });
+
+        // Theme
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        themeToggleBtn.addEventListener('click', () => {
+            const html = document.documentElement;
+            const next = html.dataset.theme === 'dark' ? 'light' : 'dark';
+            html.dataset.theme = next;
+            localStorage.setItem('theme', next);
+        });
+
+        // Escape
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { closeMenu(); closeSearch(); }
+        });
+    </script>
+</body>
+</html>

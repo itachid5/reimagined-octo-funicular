@@ -1,0 +1,73 @@
+{% extends "admin/base.html" %}
+{% block title %}Tags{% endblock %}
+{% block header %}Tags{% endblock %}
+{% block content %}
+<div class="panel">
+    <div class="panel-heading">
+        <h2>Add Tag</h2>
+    </div>
+    <form method="post" class="form-grid compact taxonomy-form" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end;">
+        <label style="flex: 1; min-width: 200px;">Name
+            <input name="name" required style="margin-top: 6px;">
+        </label>
+        <label style="flex: 0 0 120px;">Menu Order
+            <input type="number" name="menu_order" value="0" style="margin-top: 6px;">
+        </label>
+        <label class="check" style="flex: 0 0 auto; margin-bottom: 0; padding-bottom: 12px;">
+            <input type="checkbox" name="show_in_menu" value="true"> 
+            <span>Show in Menu</span>
+        </label>
+        <button class="button" style="padding: 10px 20px; height: 42px;"><i data-lucide="plus"></i> Add Tag</button>
+    </form>
+</div>
+
+<div class="panel">
+    <div class="panel-heading">
+        <h2>All Tags</h2>
+    </div>
+    <div style="overflow-x: auto;">
+        <table class="tags-table taxonomy-admin-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Slug</th>
+                    <th>Show in Menu</th>
+                    <th>Order</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tag in tags %}
+                <tr>
+                    <td data-label="Name">
+                        <input form="tag-{{ tag.id }}-form" name="name" value="{{ tag.name }}" required style="min-height: 38px; padding: 6px 10px;">
+                    </td>
+                    <td data-label="Slug"><strong>{{ tag.slug }}</strong></td>
+                    <td data-label="Show in Menu">
+                        <label class="check compact-check" style="margin: 0; justify-content: center;">
+                            <input form="tag-{{ tag.id }}-form" type="checkbox" name="show_in_menu" value="true" {% if tag.show_in_menu %}checked{% endif %}>
+                            <span>Visible</span>
+                        </label>
+                    </td>
+                    <td data-label="Order">
+                        <input form="tag-{{ tag.id }}-form" type="number" name="menu_order" value="{{ tag.menu_order }}" style="min-height: 38px; padding: 6px 10px; width: 80px;">
+                    </td>
+                    <td data-label="Actions">
+                        <div class="actions" style="margin-top: 0;">
+                            <form id="tag-{{ tag.id }}-form" method="post" action="/admin/tags/{{ tag.id }}/update" style="margin: 0;">
+                                <button class="button secondary-button" style="padding: 4px 10px; font-size: 11px;">Update</button>
+                            </form>
+                            <form method="post" action="/admin/tags/{{ tag.id }}/delete" data-confirm style="margin: 0;">
+                                <button class="button danger-button" style="padding: 4px 10px; font-size: 11px;">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr class="empty-row"><td colspan="5" class="empty-state">No tags yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

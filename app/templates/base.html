@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ settings.get('site_name', 'Blog Website') }}{% endblock %}</title>
+
+  <script>
+    (() => {
+      const saved = localStorage.getItem('theme') || localStorage.getItem('admin-theme');
+      const prefer = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.dataset.theme = saved || (prefer ? 'dark' : 'light');
+    })();
+  </script>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Material+Symbols+Outlined:wght,FILL@200,0..1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css?v=6">
+</head>
+<body>
+  {% set site_name = settings.get('site_name', 'Blog Website') %}
+  {% set site_description = settings.get('site_description', 'A modern professional blog built with FastAPI.') %}
+  {% set current_path = request.url.path if request is defined else '' %}
+  {% set active_category_slug = category.slug if category is defined and category else '' %}
+  {% set active_tag_slug = tag.slug if tag is defined and tag else '' %}
+
+  <!-- TOPBAR -->
+  <div class="topbar glass-panel">
+    <div class="topbar-left">
+      <button class="icon-btn" id="openMenuBtn" aria-label="Open menu">
+        <i data-lucide="menu"></i>
+      </button>
+      <span class="topbar-brand"><a href="/">{{ site_name }}</a></span>
+    </div>
+    <nav class="topbar-nav" aria-label="Primary navigation">
+      <a href="/posts" {% if current_path == '/posts' %}class="active"{% endif %}>All Posts</a>
+      <a href="/categories" {% if current_path == '/categories' %}class="active"{% endif %}>Categories</a>
+      <a href="/tags" {% if current_path == '/tags' %}class="active"{% endif %}>Tags</a>
+      <a href="/about" {% if current_path == '/about' %}class="active"{% endif %}>About</a>
+    </nav>
+    <div class="topbar-right">
+      <button class="icon-btn" type="button" aria-label="Search" data-open-search>
+        <i data-lucide="search"></i>
+      </button>
+      <button class="icon-btn" id="themeToggleBtn" aria-label="Toggle theme">
+        <i data-lucide="sun" class="sun-icon"></i>
+        <i data-lucide="moon" class="moon-icon"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- SEARCH OVERLAY -->
+  <div id="search-overlay" class="search-overlay" aria-hidden="true">
+    <div class="search-overlay-head">
+      <span>Search {{ site_name }}</span>
+      <button class="icon-button soft" type="button" aria-label="Close search" data-close-search>
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="search-panel">
+      <form id="search-form" action="/search" method="get">
+        <input id="search-input" name="q" type="text" placeholder="Type to search..." autocomplete="off">
+      </form>
+      <div class="search-topics" id="search-tags">
+        <span>Popular Topics</span>
+        <div>
+          {% for mc in menu_categories[:4] %}<a href="/category/{{ mc.slug }}">{{ mc.name }}</a>{% endfor %}
+          {% for mt in menu_tags[:6] %}<a href="/tag/{{ mt.slug }}">#{{ mt.name }}</a>{% endfor %}
+          {% if not menu_categories and not menu_tags %}<a href="/categories">Categories</a><a href="/tags">Tags</a>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OVERLAY + SIDEBAR -->
+  <div class="overlay" id="sidebarOverlay"></div>
+
+  <aside class="sidebar glass-panel" id="sidebarMenu">
+    <div class="sidebar-header">
+      <div class="sidebar-logo"><a href="/">{{ site_name }}</a></div>
+      <button class="icon-btn" id="closeMenuBtn" aria-label="Close menu">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+
+    <div class="section-title">Navigation</div>
+    <a href="/" class="menu-item {% if current_path == '/' %}active{% endif %}">
+      <i data-lucide="home"></i><span>Home</span>
+    </a>
+    <a href="/posts" class="menu-item {% if current_path == '/posts' %}active{% endif %}">
+      <i data-lucide="file-text"></i><span>All Posts</span>
+    </a>
+    <a href="/search" class="menu-item {% if current_path == '/search' %}active{% endif %}">
+      <i data-lucide="search"></i><span>Search</span>
+    </a>
+
+    <button type="button" class="menu-item collapsible-btn" onclick="toggleSubmenu('cat-submenu', this)" aria-expanded="{{ 'true' if active_category_slug or current_path == '/categories' else 'false' }}" aria-controls="cat-submenu">
+      <span class="menu-row"><i data-lucide="folder"></i><span class="menu-label">Categories</span></span>
+      <i data-lucide="chevron-down" class="chevron"></i>
+    </button>
+    <div id="cat-submenu" class="submenu {% if active_category_slug or current_path == '/categories' %}open{% endif %}">
+      <div class="submenu-inner">
+        {% if menu_categories %}
+          {% for mc in menu_categories[:4] %}
+          <a href="/category/{{ mc.slug }}" class="menu-item sub-item {% if active_category_slug == mc.slug %}active{% endif %}">
+            <i data-lucide="folder"></i><span class="menu-label">{{ mc.name }}</span>
+          </a>
+          {% endfor %}
+        {% else %}
+          <div class="menu-item sub-item" style="pointer-events: none; opacity: 0.6;">
+            <i data-lucide="info"></i><span class="menu-label">No categories found</span>
+          </div>
+        {% endif %}
+        <a href="/categories" class="menu-item sub-item {% if current_path == '/categories' %}active{% endif %}">
+          <i data-lucide="grid"></i><span class="menu-label">All Categories</span>
+        </a>
+      </div>
+    </div>
+
+    <button type="button" class="menu-item collapsible-btn" onclick="toggleSubmenu('tag-submenu', this)" aria-expanded="{{ 'true' if active_tag_slug or current_path == '/tags' else 'false' }}" aria-controls="tag-submenu">
+      <span class="menu-row"><i data-lucide="tag"></i><span class="menu-label">Tags</span></span>
+      <i data-lucide="chevron-down" class="chevron"></i>
+    </button>
+    <div id="tag-submenu" class="submenu {% if active_tag_slug or current_path == '/tags' %}open{% endif %}">
+      <div class="submenu-inner">
+        {% if menu_tags %}
+          {% for mt in menu_tags[:4] %}
+          <a href="/tag/{{ mt.slug }}" class="menu-item sub-item {% if active_tag_slug == mt.slug %}active{% endif %}">
+            <i data-lucide="hash"></i><span class="menu-label">{{ mt.name }}</span>
+          </a>
+          {% endfor %}
+        {% else %}
+          <div class="menu-item sub-item" style="pointer-events: none; opacity: 0.6;">
+            <i data-lucide="info"></i><span class="menu-label">No tags found</span>
+          </div>
+        {% endif %}
+        <a href="/tags" class="menu-item sub-item {% if current_path == '/tags' %}active{% endif %}">
+          <i data-lucide="tags"></i><span class="menu-label">All Tags</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="section-title">Discover</div>
+    <a href="/popular" class="menu-item {% if current_path == '/popular' %}active{% endif %}">
+      <i data-lucide="flame"></i><span>Popular Posts</span>
+    </a>
+    <a href="/recent" class="menu-item {% if current_path == '/recent' %}active{% endif %}">
+      <i data-lucide="clock"></i><span>Recent Posts</span>
+    </a>
+    <a href="/archive" class="menu-item {% if current_path == '/archive' %}active{% endif %}">
+      <i data-lucide="archive"></i><span>Archive</span>
+    </a>
+
+    <div class="section-title">Pages</div>
+    <a href="/about" class="menu-item {% if current_path == '/about' %}active{% endif %}">
+      <i data-lucide="info"></i><span>About</span>
+    </a>
+    <a href="/contact" class="menu-item {% if current_path == '/contact' %}active{% endif %}">
+      <i data-lucide="mail"></i><span>Contact</span>
+    </a>
+    <a href="/privacy" class="menu-item {% if current_path == '/privacy' %}active{% endif %}">
+      <i data-lucide="shield"></i><span>Privacy Policy</span>
+    </a>
+    <a href="/terms" class="menu-item {% if current_path == '/terms' %}active{% endif %}" style="margin-bottom: 20px;">
+      <i data-lucide="file-check"></i><span>Terms & Conditions</span>
+    </a>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="top" class="site-main">
+    {% if not_found is defined %}
+    <section class="page-card">
+      <p class="eyebrow">404</p>
+      <h1>Page not found</h1>
+      <p>The page you requested could not be found.</p>
+    </section>
+    {% else %}
+    {% block content %}{% endblock %}
+    {% endif %}
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <a class="footer-brand" href="/">{{ site_name }}</a>
+        <p>{{ site_description }}</p>
+      </div>
+      <nav aria-label="Footer links">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/contact">Contact</a>
+        <a href="/posts">All Posts</a>
+        <a href="/categories">Categories</a>
+        <a href="/tags">Tags</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Sidebar logic
+    const sidebarMenu = document.getElementById('sidebarMenu');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const openMenuBtn = document.getElementById('openMenuBtn');
+    const closeMenuBtn = document.getElementById('closeMenuBtn');
+
+    function openSidebar() {
+      sidebarMenu.classList.add('open');
+      sidebarOverlay.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeSidebar() {
+      sidebarMenu.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+    if (openMenuBtn) openMenuBtn.onclick = openSidebar;
+    if (closeMenuBtn) closeMenuBtn.onclick = closeSidebar;
+    if (sidebarOverlay) sidebarOverlay.onclick = closeSidebar;
+
+    // Search overlay
+    const searchOverlay = document.getElementById('search-overlay');
+    const searchInput = document.getElementById('search-input');
+    const searchTags = document.getElementById('search-tags');
+    const searchForm = document.getElementById('search-form');
+
+    document.querySelectorAll('[data-open-search]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        searchOverlay.classList.add('open');
+        searchOverlay.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => {
+          searchInput?.focus();
+          searchTags?.classList.add('ready');
+        }, 90);
+      });
+    });
+    document.querySelectorAll('[data-close-search]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        searchOverlay.classList.remove('open');
+        searchOverlay.setAttribute('aria-hidden', 'true');
+        searchTags?.classList.remove('ready');
+        if (searchInput) searchInput.value = '';
+        document.body.style.overflow = '';
+      });
+    });
+
+    // Search form submit
+    searchForm?.addEventListener('submit', e => {
+      if (!searchInput?.value.trim()) { e.preventDefault(); searchInput?.focus(); }
+    });
+    searchInput?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const q = searchInput.value.trim();
+        if (q) window.location.href = `/search?q=${encodeURIComponent(q)}`;
+      }
+    });
+
+    // Theme toggle
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    if (themeToggleBtn) {
+      themeToggleBtn.onclick = () => {
+        const html = document.documentElement;
+        const next = html.dataset.theme === 'dark' ? 'light' : 'dark';
+        html.dataset.theme = next;
+        localStorage.setItem('theme', next);
+      };
+    }
+
+    // Escape key
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        closeSidebar();
+        searchOverlay?.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+    });
+
+    // Collapsible submenu logic
+    window.toggleSubmenu = function(id, btn) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const isOpen = el.classList.contains('open');
+      document.querySelectorAll('.submenu.open').forEach(submenu => {
+        if (submenu.id !== id) submenu.classList.remove('open');
+      });
+      document.querySelectorAll('.collapsible-btn[aria-expanded="true"]').forEach(button => {
+        if (button !== btn) button.setAttribute('aria-expanded', 'false');
+      });
+      el.classList.toggle('open', !isOpen);
+      btn.setAttribute('aria-expanded', String(!isOpen));
+    };
+  </script>
+</body>
+</html>

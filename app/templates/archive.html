@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Archive - {{ settings.get('site_name', 'Blog Website') }}{% endblock %}
+{% block content %}
+<section class="page-card archive-hero">
+  <p class="eyebrow">📚 Archive</p>
+  <h1>Post Archive</h1>
+  <p>Browse all published content organized by date.</p>
+</section>
+<div class="archive-list">
+  {% for month, posts in grouped_posts.items() %}
+  <div class="archive-month-group">
+    <h2 class="archive-month-title">
+      <i data-lucide="calendar" style="width:20px;height:20px;margin-right:8px;vertical-align:middle;opacity:.6;"></i>
+      {{ month }}
+      <span class="archive-count">{{ posts|length }} post{{ 's' if posts|length != 1 else '' }}</span>
+    </h2>
+    <div class="archive-items">
+      {% for post in posts %}
+      <a href="/post/{{ post.slug }}" class="archive-item">
+        <span class="archive-item-date">
+          {{ post.published_at.strftime('%b %d') if post.published_at else '' }}
+        </span>
+        <span class="archive-item-title">{{ post.title }}</span>
+        <span class="archive-item-category">{{ post.category.name if post.category else '' }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <p class="empty-state">No archived posts yet.</p>
+  {% endfor %}
+</div>
+
+<script>lucide.createIcons();</script>
+{% endblock %}

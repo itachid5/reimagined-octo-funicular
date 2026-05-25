@@ -1,0 +1,98 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block header %}Dashboard Overview{% endblock %}
+{% block content %}
+
+<div class="stats-grid">
+    <div class="stat-card full-width">
+        <div class="stat-card-header">
+            <span>Total Posts</span>
+            <i data-lucide="file-text" style="color: var(--accent-color);"></i>
+        </div>
+        <h3>{{ counts.total_posts }}</h3>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span>Published</span>
+            <i data-lucide="check-circle" style="color: var(--color-success);"></i>
+        </div>
+        <h3>{{ counts.published_posts }}</h3>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span>Drafts</span>
+            <i data-lucide="edit" style="color: var(--color-warning);"></i>
+        </div>
+        <h3>{{ counts.draft_posts }}</h3>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span>Media Files</span>
+            <i data-lucide="image" style="color: var(--accent-color);"></i>
+        </div>
+        <h3>{{ counts.media }}</h3>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span>Categories</span>
+            <i data-lucide="folder"></i>
+        </div>
+        <h3>{{ counts.categories }}</h3>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span>Tags</span>
+            <i data-lucide="tag"></i>
+        </div>
+        <h3>{{ counts.tags }}</h3>
+    </div>
+</div>
+
+<div class="panel">
+    <div class="panel-heading">
+        <h2>Quick Actions</h2>
+    </div>
+    <div class="quick-grid">
+        <a class="button" href="/admin/posts/create"><i data-lucide="plus"></i> Create Post</a>
+        <a class="button secondary-button" href="/admin/media"><i data-lucide="upload"></i> Upload Media</a>
+        <a class="button secondary-button" href="/admin/categories"><i data-lucide="folder"></i> Manage Categories</a>
+        <a class="button secondary-button" href="/admin/tags"><i data-lucide="tag"></i> Manage Tags</a>
+    </div>
+</div>
+
+<div class="panel">
+    <div class="panel-heading">
+        <h2>Recent Posts</h2>
+        <a class="button ghost-button" href="/admin/posts">View All</a>
+    </div>
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Views</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in recent_posts %}
+                <tr>
+                    <td data-label="Title">{{ post.title }}</td>
+                    <td data-label="Status">
+                        <span class="badge {{ post.status }}">{{ post.status }}</span>
+                    </td>
+                    <td data-label="Views">{{ format_views_count(post.views_count) }}</td>
+                    <td data-label="Action">
+                        <a href="/admin/posts/{{ post.id }}/edit" class="button secondary-button" style="padding: 4px 10px; font-size: 11px;">Edit</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr class="empty-row"><td colspan="4" class="empty-state">No posts yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

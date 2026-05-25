@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard{% endblock %} - {{ settings.get('site_name', 'Blog') }}</title>
+    
+    <script>
+        const savedAdminTheme = localStorage.getItem('admin-theme') || localStorage.getItem('theme');
+        if (savedAdminTheme) {
+            document.documentElement.dataset.theme = savedAdminTheme;
+        }
+    </script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    {% block extra_head %}{% endblock %}
+    <link rel="stylesheet" href="/static/css/admin.css?v=2">
+</head>
+<body>
+
+    <div class="topbar glass-panel">
+        <div class="topbar-left">
+            <button class="icon-btn menu-btn" id="openMenuBtn">
+                <i data-lucide="menu"></i>
+            </button>
+            <h1>{{ settings.get('site_name', 'Blog Admin') }}</h1>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <span style="font-size: 13px; color: var(--text-secondary);" class="desktop-only">{{ admin.email if admin else '' }}</span>
+            <button class="icon-btn" id="themeToggleBtn" title="Toggle Theme">
+                <i data-lucide="sun" class="sun-icon"></i>
+                <i data-lucide="moon" class="moon-icon"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="overlay" id="sidebarOverlay"></div>
+
+    <div class="sidebar glass-panel" id="sidebarMenu">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">Admin Panel</div>
+            <button class="icon-btn" id="closeMenuBtn">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        {% set path = request.url.path if request is defined else '' %}
+
+        <div class="section-title">Content</div>
+        <a href="/admin/dashboard" class="menu-item {% if path.startswith('/admin/dashboard') %}active{% endif %}">
+            <i data-lucide="layout-dashboard"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="/admin/posts" class="menu-item {% if path.startswith('/admin/posts') %}active{% endif %}">
+            <i data-lucide="file-text"></i>
+            <span>Posts</span>
+        </a>
+        <a href="/admin/categories" class="menu-item {% if path.startswith('/admin/categories') %}active{% endif %}">
+            <i data-lucide="folder"></i>
+            <span>Categories</span>
+        </a>
+        <a href="/admin/tags" class="menu-item {% if path.startswith('/admin/tags') %}active{% endif %}">
+            <i data-lucide="tag"></i>
+            <span>Tags</span>
+        </a>
+        <a href="/admin/pages" class="menu-item {% if path.startswith('/admin/pages') %}active{% endif %}">
+            <i data-lucide="file"></i>
+            <span>Pages</span>
+        </a>
+        <a href="/admin/media" class="menu-item {% if path.startswith('/admin/media') %}active{% endif %}">
+            <i data-lucide="image"></i>
+            <span>Media Library</span>
+        </a>
+
+        <div class="section-title">System</div>
+        <a href="/admin/settings" class="menu-item {% if path.startswith('/admin/settings') %}active{% endif %}">
+            <i data-lucide="settings"></i>
+            <span>Settings</span>
+        </a>
+        <a href="/" target="_blank" rel="noopener" class="menu-item">
+            <i data-lucide="external-link"></i>
+            <span>View Site</span>
+        </a>
+        <a href="/admin/logout" class="menu-item logout" style="margin-bottom: 20px;">
+            <i data-lucide="log-out"></i>
+            <span>Logout</span>
+        </a>
+    </div>
+
+    <div class="main-content">
+        <h2>{% block header %}Admin Overview{% endblock %}</h2>
+        {% block content %}{% endblock %}
+    </div>
+
+    {% block scripts %}{% endblock %}
+    <script src="/static/js/admin.js?v=2"></script>
+    <script>
+        // Icons
+        lucide.createIcons();
+
+        // Sidebar logic
+        const sidebarMenu = document.getElementById('sidebarMenu');
+        const overlay = document.getElementById('sidebarOverlay');
+        const openBtn = document.getElementById('openMenuBtn');
+        const closeBtn = document.getElementById('closeMenuBtn');
+        
+        if (openBtn) {
+            openBtn.onclick = () => { 
+                sidebarMenu.classList.add('open'); 
+                overlay.classList.add('show'); 
+            };
+        }
+        if (closeBtn) {
+            closeBtn.onclick = () => { 
+                sidebarMenu.classList.remove('open'); 
+                overlay.classList.remove('show'); 
+            };
+        }
+        if (overlay) {
+            overlay.onclick = () => { 
+                sidebarMenu.classList.remove('open'); 
+                overlay.classList.remove('show'); 
+            };
+        }
+
+        // Theme Toggle logic
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        if (themeToggleBtn) {
+            themeToggleBtn.onclick = () => {
+                const html = document.documentElement;
+                const currentTheme = html.getAttribute('data-theme') || 'light';
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-theme', newTheme);
+                localStorage.setItem('admin-theme', newTheme);
+            };
+        }
+    </script>
+</body>
+</html>

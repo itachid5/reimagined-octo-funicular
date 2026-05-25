@@ -1,0 +1,68 @@
+{% extends "admin/base.html" %}
+{% block title %}Media Library{% endblock %}
+{% block header %}Media Library{% endblock %}
+{% block content %}
+<div class="panel">
+    <div class="panel-heading">
+        <h2>Upload Media</h2>
+    </div>
+    
+    {% if error %}
+    <div class="error" style="margin-bottom: 20px;">{{ error }}</div>
+    {% endif %}
+    
+    <form method="post" action="/admin/media/upload" enctype="multipart/form-data" class="form-grid compact media-upload-form" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+        <label style="flex: 1; min-width: 250px;">Select file
+            <input type="file" name="file" required style="margin-top: 6px; background: var(--card-bg);">
+        </label>
+        <button class="button" style="padding: 10px 20px; height: 42px; margin-bottom: 2px;"><i data-lucide="upload"></i> Upload</button>
+    </form>
+</div>
+
+<div class="panel">
+    <div class="panel-heading">
+        <h2>Library <span style="font-size: 13px; color: var(--text-secondary); margin-left: 10px;">{{ media_items|length }} item{{ '' if media_items|length == 1 else 's' }}</span></h2>
+    </div>
+    
+    <form method="get" action="/admin/media" class="media-filters" style="margin-bottom: 20px;">
+        <input name="q" value="{{ q }}" placeholder="Search media..." style="flex: 1; min-width: 200px;">
+        <select name="resource_type" style="width: 150px;">
+            <option value="">All types</option>
+            {% for option in ['image', 'video', 'audio', 'raw'] %}
+            <option value="{{ option }}" {% if resource_type == option %}selected{% endif %}>{{ option|title }}</option>
+            {% endfor %}
+        </select>
+        <button class="button secondary-button" style="padding: 10px 15px; height: 42px;"><i data-lucide="filter"></i> Filter</button>
+    </form>
+    
+    <div class="media-grid">
+        {% for item in media_items %}
+        <article class="media-card" data-media-card data-media-type="{{ item.resource_type }}">
+            <div class="media-preview">
+                {% if item.resource_type == 'image' %}
+                <img src="{{ item.secure_url }}" alt="{{ item.alt_text or item.original_filename }}">
+                {% else %}
+                <span class="media-icon">{{ item.resource_type|upper }}</span>
+                {% endif %}
+            </div>
+            <div class="media-body">
+                <h3>{{ item.title or item.original_filename }}</h3>
+                <p>{{ item.resource_type }}{% if item.format %} · {{ item.format }}{% endif %}{% if item.bytes %} · {{ format_file_size(item.bytes) }}{% endif %}</p>
+                <div style="font-size: 10px; color: var(--text-secondary); margin: 6px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    {{ item.secure_url }}
+                </div>
+                <div class="actions" style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                    <button type="button" class="button secondary-button" data-copy-value="{{ item.secure_url }}" style="padding: 4px 8px; font-size: 11px; width: 100%;">Copy URL</button>
+                    <a class="button ghost-button" href="{{ item.secure_url }}" target="_blank" rel="noopener" style="padding: 4px 8px; font-size: 11px; width: 100%;">Open</a>
+                    <form method="post" action="/admin/media/{{ item.id }}/delete" data-confirm style="grid-column: 1 / -1; margin: 0;">
+                        <button class="button danger-button" style="padding: 4px 8px; font-size: 11px; width: 100%;">Remove from library</button>
+                    </form>
+                </div>
+            </div>
+        </article>
+        {% else %}
+        <div class="empty-state" style="grid-column: 1 / -1;">No media yet. Upload a file to start building your library.</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

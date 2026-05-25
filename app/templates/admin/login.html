@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - {{ settings.get('site_name', 'Blog') }}</title>
+    <script>
+        const savedAdminTheme = localStorage.getItem('admin-theme') || localStorage.getItem('theme');
+        if (savedAdminTheme) {
+            document.documentElement.dataset.theme = savedAdminTheme;
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/admin.css?v=2">
+    <style>
+        .login-body {
+            background: linear-gradient(135deg, var(--bg-body) 0%, rgba(0, 0, 0, 0.05) 100%);
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 0;
+        }
+        html[data-theme="dark"] .login-body {
+            background: radial-gradient(circle at top right, rgba(30, 30, 35, 1) 0%, var(--bg-body) 100%);
+        }
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background: var(--card-bg);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin: 20px;
+            box-sizing: border-box;
+        }
+        html[data-theme="dark"] .login-card {
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            background: rgba(20, 20, 20, 0.6);
+        }
+        .login-card:hover {
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.12);
+        }
+        html[data-theme="dark"] .login-card:hover {
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+        .login-card h1 {
+            font-size: 28px;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 30px;
+            letter-spacing: -0.5px;
+            color: var(--text-primary);
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .form-group label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+        .form-group input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--line);
+            color: var(--text-primary);
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        html[data-theme="dark"] .form-group input {
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .form-group input:focus {
+            border-color: var(--text-primary);
+            background: transparent;
+            box-shadow: 0 0 0 3px rgba(100, 100, 100, 0.1);
+        }
+        html[data-theme="dark"] .form-group input:focus {
+            border-color: var(--text-primary);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+        }
+        .form-group input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+        .login-button {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 10px;
+            background: var(--text-primary);
+            color: var(--bg-body);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            opacity: 0.9;
+        }
+        html[data-theme="dark"] .login-button:hover {
+            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            text-decoration: none;
+            transition: color 0.2s ease;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            color: var(--text-primary);
+        }
+        .error-msg {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--color-danger);
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            margin-bottom: 25px;
+            text-align: center;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 30px 20px;
+                border-radius: 16px;
+                margin: 15px;
+            }
+            .login-body {
+                align-items: flex-start;
+                padding-top: 8vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-body">
+        <form class="login-card" method="post" action="/admin/login">
+            <h1>Admin Login</h1>
+            {% if error %}
+            <div class="error-msg">
+                {{ error }}
+            </div>
+            {% endif %}
+            
+            <div class="form-group">
+                <label for="username">Username or Email</label>
+                <input type="text" id="username" name="username" autocomplete="username" required placeholder="Enter your username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" autocomplete="current-password" required placeholder="Enter your password">
+            </div>
+            
+            <button type="submit" class="login-button">Login</button>
+            
+            <div style="text-align: center; margin-top: 25px;">
+                <a href="/" class="back-link">
+                    &larr; Back to site
+                </a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
